@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.WatchAI" parent="android:Theme.DeviceDefault" />
+</resources>
