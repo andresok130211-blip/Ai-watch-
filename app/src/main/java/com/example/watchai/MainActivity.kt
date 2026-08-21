@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
                 // Берём первое сопряжённое устройство (обычно это телефон)
                 val phoneDevice = bonded.first()
 
-                socket = phoneDevice.createRfcommSocketToServiceRecord(appUuid)
+                socket = phoneDevice.createInsecureRfcommSocketToServiceRecord(appUuid)
                 adapter.cancelDiscovery()
                 socket.connect()
 
