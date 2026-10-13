@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    branches: [main]
+    branches: [watch-ai]
   workflow_dispatch:
 
 permissions:
@@ -57,7 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest --yes --cleanup-tag || true
-          gh release create latest dist/*.apk \
+          gh release delete watchai-latest --yes --cleanup-tag || true
+          gh release create watchai-latest dist/*.apk --target "$GITHUB_SHA" \
             --title "WatchAI (последняя сборка)" \
             --notes "WatchAI-phone.apk — на телефон, WatchAI-watch.apk — на часы. Инструкция в README."
