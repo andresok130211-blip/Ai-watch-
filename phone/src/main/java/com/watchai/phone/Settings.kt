@@ -6,9 +6,18 @@ import android.content.Context
 class Settings(ctx: Context) {
     private val p = ctx.applicationContext.getSharedPreferences("watchai", Context.MODE_PRIVATE)
 
+    /** Встроенный ИИ (llama-server внутри приложения) вместо внешнего адреса. */
+    var builtin: Boolean
+        get() = p.getBoolean("builtin", true)
+        set(v) = p.edit().putBoolean("builtin", v).apply()
+
     var url: String
         get() = p.getString("url", "http://127.0.0.1:11434/v1") ?: ""
         set(v) = p.edit().putString("url", v).apply()
+
+    /** Адрес, по которому реально идёт запрос. */
+    val effectiveUrl: String
+        get() = if (builtin) LocalServer.BASE else url
 
     var model: String
         get() = p.getString("model", "") ?: ""

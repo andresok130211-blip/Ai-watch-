@@ -24,6 +24,7 @@ object Bridge {
     /** Блокирующий вызов: нужно запускать не в главном потоке. */
     fun process(ctx: Context, nodeId: String, question: String) {
         val s = Settings(ctx)
+        LlmClient.appContext = ctx.applicationContext
         val answer = try {
             LlmClient.ask(s, question).ifBlank { "(пустой ответ)" }
         } catch (e: Exception) {

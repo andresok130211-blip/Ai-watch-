@@ -17,7 +17,16 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.1"
+
+        // llama-server собран только под 64-битный ARM
+        ndk { abiFilters += "arm64-v8a" }
+    }
+
+    packaging {
+        // llama-server лежит в APK как libllamaserver.so и запускается как процесс,
+        // поэтому библиотеки должны распаковываться на диск
+        jniLibs { useLegacyPackaging = true }
     }
 
     signingConfigs {

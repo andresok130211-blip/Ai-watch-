@@ -9,8 +9,14 @@ import java.net.URL
 /** Клиент OpenAI-совместимого эндпоинта /chat/completions. */
 object LlmClient {
 
+    @Volatile var appContext: android.content.Context? = null
+
     fun ask(s: Settings, question: String): String {
-        val base = s.url.trim().trimEnd('/')
+        if (s.builtin) {
+            // Первый запрос запускает сервер и грузит модель; ошибка вернётся текстом.
+            LocalServer.ensureRunning(appContext ?: error("нет контекста"))?.let { throw IOException(it) }
+        }
+        val base = s.effectiveUrl.trim().trimEnd('/')
         val endpoint = if (base.endsWith("/chat/completions")) base else "$base/chat/completions"
 
         val messages = JSONArray()
@@ -23,7 +29,13 @@ object LlmClient {
             .put("messages", messages)
             .put("stream", false)
             .put("max_tokens", 400)
-        if (s.model.isNotBlank()) body.put("model", s.model.trim())
+        if (s.builtin) {
+            // Qwen3: без режима рассуждений, иначе на часах будет долгая пауза.
+            body.put("chat_template_kwargs", JSONObject().put("enable_thinking", false))
+            body.put("temperature", 0.7)
+        } else if (s.model.isNotBlank()) {
+            body.put("model", s.model.trim())
+        }
 
         val conn = URL(endpoint).openConnection() as HttpURLConnection
         try {

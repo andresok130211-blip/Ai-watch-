@@ -8,6 +8,7 @@
 
     <application
         android:allowBackup="true"
+        android:extractNativeLibs="true"
         android:icon="@android:drawable/sym_def_app_icon"
         android:label="Часы → ИИ"
         android:theme="@android:style/Theme.Material.Light.DarkActionBar"
