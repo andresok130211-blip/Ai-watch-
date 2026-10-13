@@ -67,6 +67,7 @@ jobs:
           cmake --build /tmp/llama-build --target llama-server -j"$(nproc)"
           mkdir -p phone/src/main/jniLibs/arm64-v8a
           cp /tmp/llama-build/bin/llama-server phone/src/main/jniLibs/arm64-v8a/libllamaserver.so
+          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" phone/src/main/jniLibs/arm64-v8a/libllamaserver.so
           file phone/src/main/jniLibs/arm64-v8a/libllamaserver.so
           ls -la phone/src/main/jniLibs/arm64-v8a/
 
