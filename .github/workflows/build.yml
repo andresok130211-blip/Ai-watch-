@@ -1,0 +1,63 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Один ключ подписи для обоих приложений (Data Layer требует одинаковую подпись).
+      # Если секрета KEYSTORE_B64 нет, создаётся временный ключ.
+      - name: Prepare keystore
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ] && [ -n "$KS_PASS" ]; then
+            echo "$KS_B64" | base64 -d > watchai.keystore
+            echo "KEYSTORE_PASSWORD=$KS_PASS" >> "$GITHUB_ENV"
+          else
+            keytool -genkeypair -keystore watchai.keystore -alias watchai \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass watchai-temp -keypass watchai-temp -dname "CN=WatchAI"
+            echo "KEYSTORE_PASSWORD=watchai-temp" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build APKs
+        run: ./gradlew --no-daemon :phone:assembleRelease :wear:assembleRelease
+
+      - name: Collect APKs
+        run: |
+          mkdir -p dist
+          cp phone/build/outputs/apk/release/phone-release.apk dist/WatchAI-phone.apk
+          cp wear/build/outputs/apk/release/wear-release.apk dist/WatchAI-watch.apk
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WatchAI-apk
+          path: dist/*.apk
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest dist/*.apk \
+            --title "WatchAI (последняя сборка)" \
+            --notes "WatchAI-phone.apk — на телефон, WatchAI-watch.apk — на часы. Инструкция в README."
