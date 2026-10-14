@@ -7,8 +7,8 @@ import com.google.android.gms.wearable.WearableListenerService
 class AskListenerService : WearableListenerService() {
     override fun onMessageReceived(event: MessageEvent) {
         if (event.path != Bridge.PATH_ASK) return
-        val question = String(event.data, Charsets.UTF_8).trim()
-        if (question.isEmpty()) return
-        Bridge.handle(applicationContext, event.sourceNodeId, question)
+        val payload = String(event.data, Charsets.UTF_8).trim()
+        if (payload.isEmpty()) return
+        Bridge.handle(applicationContext, event.sourceNodeId, payload)
     }
 }

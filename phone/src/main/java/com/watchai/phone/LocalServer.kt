@@ -49,7 +49,7 @@ object LocalServer {
             "-m", model.absolutePath,
             "--host", "127.0.0.1",
             "--port", PORT.toString(),
-            "-c", "2048",
+            "-c", "4096",
             "-t", threads.toString(),
             "--jinja"
         )

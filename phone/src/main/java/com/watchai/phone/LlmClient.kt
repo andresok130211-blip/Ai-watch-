@@ -11,7 +11,24 @@ object LlmClient {
 
     @Volatile var appContext: android.content.Context? = null
 
-    fun ask(s: Settings, question: String): String {
+    /** Реплика прошлой переписки: role = "user" или "assistant". */
+    data class Turn(val role: String, val text: String)
+
+    /** Берём самые свежие реплики, пока они помещаются в лимит символов (контекст модели ограничен). */
+    private fun trimHistory(history: List<Turn>, maxChars: Int = 3500): List<Turn> {
+        val out = ArrayDeque<Turn>()
+        var total = 0
+        for (t in history.asReversed()) {
+            if (total + t.text.length > maxChars) break
+            out.addFirst(t)
+            total += t.text.length
+        }
+        // Диалог должен начинаться с реплики пользователя
+        while (out.isNotEmpty() && out.first().role != "user") out.removeFirst()
+        return out.toList()
+    }
+
+    fun ask(s: Settings, question: String, history: List<Turn> = emptyList()): String {
         if (s.builtin) {
             // Первый запрос запускает сервер и грузит модель; ошибка вернётся текстом.
             LocalServer.ensureRunning(appContext ?: error("нет контекста"))?.let { throw IOException(it) }
@@ -22,6 +39,9 @@ object LlmClient {
         val messages = JSONArray()
         if (s.system.isNotBlank()) {
             messages.put(JSONObject().put("role", "system").put("content", s.system))
+        }
+        for (t in trimHistory(history)) {
+            messages.put(JSONObject().put("role", t.role).put("content", t.text))
         }
         messages.put(JSONObject().put("role", "user").put("content", question))
 
